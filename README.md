@@ -1,70 +1,91 @@
-# Getting Started with Create React App
+# Inventory App (Work in Progress)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is an **ongoing inventory management desktop application** built with Electron, React, and SQLite.
 
-## Available Scripts
+The goal of this project is to design and implement a **realistic inventory system** while deeply understanding:
+- state management
+- SQL data modeling
+- Electron IPC boundaries
+- frontend–backend coordination
+- cache invalidation and data correctness
 
-In the project directory, you can run:
+This project is **not finished** and is actively evolving.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Current Capabilities
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Products
+- Products are stored in a local SQLite database
+- Each product has:
+  - name
+  - SKU (optional)
+  - cost price
+  - selling price
+  - total quantity (derived from variants)
 
-### `npm test`
+### Variants (Size / Color)
+- Products can have multiple variants
+- Each variant represents a size + color combination
+- Quantity is tracked at the **variant level**
+- A product must always have **at least one variant**
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Stock Display
+- Spreadsheet-style stock table
+- Alternating row colors for readability
+- Sticky table header
+- Per-product “Details” button
+- Variant rows expand inline under the product row
 
-### `npm run build`
+### Variant Loading Strategy
+- Variants are **not loaded upfront**
+- Variants are fetched only when a product row is expanded
+- Loaded variants are cached per product
+- Each cached variant set has a `fresh` flag
+- Cache is marked stale after edits or movements
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Stock Movements
+- Stock movements are tracked per variant
+- Movements update:
+  - variant quantity
+  - cached product total quantity
+- Movement history is stored for auditing and reporting
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### State Management
+- Products are stored in global state (React Context + `useReducer`)
+- Variants are cached separately by product ID
+- Individual products can be updated in global state without reloading everything
+- Variant cache invalidation is handled explicitly
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## What This Project Is Focused On
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- Correct data flow over convenience
+- Clear separation between:
+  - UI
+  - state
+  - database logic
+- Learning why certain patterns exist (not just using them)
+- Avoiding premature abstractions
+- Designing for future features without overengineering
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Planned Next Steps
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- Edit product screen
+- Add / edit / delete variants from UI
+- Stock in / stock out screen
+- Sold price tracking per movement
+- Profit and reporting views
+- Search and filtering improvements
+- Keyboard-friendly workflows
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Status
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+⚠️ **Work in progress**
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The API, state shape, and UI are expected to change as the project evolves.
