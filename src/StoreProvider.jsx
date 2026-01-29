@@ -28,6 +28,11 @@ function reducer(state, action) {
           p.id === action.product.id ? action.product : p
         ),
       };
+    case "REMOVE_PRODUCT":
+      return {
+        ...state,
+        products: state.products.filter((p) => p.id !== action.productId),
+      };
 
     default:
       return state;
@@ -79,6 +84,16 @@ export function StoreProvider({ children }) {
     });
   }
 
+  function removeProduct(productId) {
+    dispatch({ type: "REMOVE_PRODUCT", productId });
+    // also drop cached variants for that product
+    setVariantsCache((prev) => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
+  }
+
   return (
     <StoreContext.Provider
       value={{
@@ -90,6 +105,7 @@ export function StoreProvider({ children }) {
         variantsCache,
         setVariantsFresh,
         updateProduct,
+        removeProduct,
       }}
     >
       {children}

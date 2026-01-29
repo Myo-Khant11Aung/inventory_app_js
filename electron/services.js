@@ -333,9 +333,18 @@ function addMovement({ variant_id, qty_change, reason, sold_price }) {
 
   const why = cleanText(reason); // can be null
 
-  const sold_price_num = toNumber(sold_price, 0);
-  if (!Number.isInteger(sold_price_num) || sold_price_num < 0) {
+  const sold_price_num =
+    sold_price == null || sold_price === "" ? null : Number(sold_price);
+
+  if (
+    sold_price_num !== null &&
+    (!Number.isFinite(sold_price_num) || sold_price_num < 0)
+  ) {
     throw new Error("sold_price must be a non-negative number.");
+  }
+
+  if (change > 0 && sold_price_num !== null) {
+    throw new Error("sold_price is only allowed for stock-out movements.");
   }
 
   const tx = db.transaction(() => {
@@ -426,7 +435,7 @@ function getMovementsByProduct({ product_id, limit = 200 }) {
     .all(pid, lim);
 }
 
-function addProductWithVariant(product, variants) {
+function addProductWithVariants(product, variants) {
   if (!Array.isArray(variants) || variants.length === 0) {
     return addProduct(product);
   }
@@ -533,7 +542,7 @@ export {
   // variants
   getVariantsByProductId,
   addVariant,
-  addProductWithVariant,
+  addProductWithVariants,
   deleteVariant,
 
   // movements

@@ -44,8 +44,11 @@ function StockScreen() {
   const [expandedId, setExpandedId] = useState([]);
   const [variantsLoading, setVariantsLoading] = useState({});
   const [variantsError, setVariantsError] = useState({});
+  const [deleting, setDeleting] = useState({}); // { [productId]: true/false }
+  const [deleteError, setDeleteError] = useState(null);
 
-  const { state, variantsCache, setVariantsFresh } = useContext(StoreContext);
+  const { state, variantsCache, setVariantsFresh, removeProduct } =
+    useContext(StoreContext);
 
   if (state.loading) return <p className="text-neutral-200">Loading...</p>;
   if (state.error) return <p className="text-red-300">Error: {state.error}</p>;
@@ -72,7 +75,6 @@ function StockScreen() {
       const variants = await window.api.products.getVariantsByProduct(
         productId
       );
-
       setVariantsFresh(productId, variants);
     } catch (err) {
       setVariantsError((prev) => ({
@@ -83,29 +85,60 @@ function StockScreen() {
       setVariantsLoading((prev) => ({ ...prev, [productId]: false }));
     }
   }
+  async function handleDelete(productId) {
+    setDeleteError(null);
+
+    const product = state.products.find((p) => p.id === productId);
+    const name = product?.name ?? "this product";
+
+    const ok = window.confirm(
+      `Delete "${name}"?\n\nThis will permanently delete:\n- the product\n- all variants\n- all movement history\n\nThis cannot be undone.`
+    );
+
+    if (!ok) return;
+
+    // optimistic UI cleanup: collapse details
+    setExpandedId((prev) => prev.filter((id) => id !== productId));
+
+    setDeleting((prev) => ({ ...prev, [productId]: true }));
+    try {
+      await window.api.products.deleteProduct(productId);
+
+      // Update global state so UI updates instantly
+      removeProduct(productId);
+    } catch (e) {
+      setDeleteError(e?.message || String(e));
+    } finally {
+      setDeleting((prev) => ({ ...prev, [productId]: false }));
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
       <header className="flex items-center justify-between px-4 pb-3 border-b border-neutral-800">
         <h1 className="text-2xl font-semibold text-neutral-200">Stock</h1>
       </header>
+      {deleteError && (
+        <div className="px-4 pt-3 text-red-300 text-sm">{deleteError}</div>
+      )}
       <div className="flex-1 overflow-auto px-4 pt-3">
         <table className="w-full table-fixed text-right text-sm text-neutral-200 border border-neutral-700/60 bg-neutral-950 ">
           <thead className="sticky top-0 z-10 bg-neutral-900 border-b border-neutral-700/60 text-lg ">
             <tr className="text-neutral-200">
-              <th className="w-[40%] text-left px-3 py-2 border-r border-neutral-700/60 font-semibold">
+              <th className="w-[45%] text-left px-3 py-2 border-r border-neutral-700/60 font-semibold">
                 Name
               </th>
-              <th className="w-[15%] text-right px-3 py-2 border-r border-neutral-700/60 font-semibold">
+              <th className="w-[14%] text-right px-3 py-2 border-r border-neutral-700/60 font-semibold">
                 Quantity
               </th>
-              <th className="w-[20%] text-right px-3 py-2 border-r border-neutral-700/60 font-semibold">
+              <th className="w-[19%] text-right px-3 py-2 border-r border-neutral-700/60 font-semibold">
                 Cost Price
               </th>
               <th className="w-[20%] text-right px-3 py-2 border-r border-neutral-700/60 font-semibold">
                 Selling Price
               </th>
-              <th className=" w-[5%] px-3 py-2 font-semibold"></th>
+              <th className=" w-[6%] px-3 py-2 font-semibold border-r border-neutral-700/60"></th>
+              <th className=" w-[6%] px-3 py-2 font-semibold border-r border-neutral-700/60"></th>
             </tr>
           </thead>
           <tbody>
@@ -131,12 +164,32 @@ function StockScreen() {
                     {Number(p.sell_price || 0).toFixed(2)}
                   </td>
                   <td className="px-3 py-2 text-right border border-neutral-700/60">
-                    <button
-                      className="text-xs px-2 py-1 rounded border border-neutral-700/60 hover:bg-neutral-800"
-                      onClick={() => handleDetails(p.id)}
-                    >
-                      Details
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        className="text-xs px-2 py-1 rounded border border-neutral-700/60 hover:bg-neutral-800"
+                        onClick={() => handleDetails(p.id)}
+                        disabled={deleting[p.id]}
+                      >
+                        Details
+                      </button>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="flex justify-center gap-2">
+                      <button
+                        className={[
+                          "text-xs px-2 py-1 rounded border",
+                          deleting[p.id]
+                            ? "border-neutral-700/60 text-neutral-500 cursor-not-allowed"
+                            : "border-red-700/60 text-red-200 hover:bg-red-950/40",
+                        ].join(" ")}
+                        onClick={() => handleDelete(p.id)}
+                        disabled={deleting[p.id]}
+                        title="Delete product"
+                      >
+                        {deleting[p.id] ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
                 {expandedId.includes(p.id) && (
