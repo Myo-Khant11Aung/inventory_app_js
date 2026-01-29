@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import StockScreen from "./stockScreen";
 import EditProductScreen from "./EditProduct";
 import Movements from "./Movements";
+import AddProduct from "./addProduct";
 
 function NavButton({ active, onClick, children }) {
   return (
@@ -31,7 +32,9 @@ export default function App() {
       case "edit":
         return <EditProductScreen />;
       case "report":
-        return <p>Report</p>;
+        return <p className="text-white">Report</p>;
+      case "add":
+        return <AddProduct />;
       default:
         return null;
     }
@@ -61,6 +64,10 @@ export default function App() {
             onClick={() => setScreen("edit")}
           >
             Edit Product
+          </NavButton>
+
+          <NavButton active={screen === "add"} onClick={() => setScreen("add")}>
+            Add Product
           </NavButton>
 
           <NavButton
