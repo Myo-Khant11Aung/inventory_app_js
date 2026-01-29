@@ -2,8 +2,8 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const isDev = require("electron-is-dev");
-const db = require("./electron/db");
-const services = require("./electron/services");
+const db = require("../electron/db");
+const services = require("../electron/services");
 let mainWindow;
 
 ipcMain.handle("get-products", async () => {
