@@ -1,9 +1,13 @@
 // electron.js
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
-const isDev = require("electron-is-dev");
-const db = require("../electron/db");
-const services = require("../electron/services");
+// const isDev = require("electron-is-dev");
+// const db = require("../electron/db");
+// const services = require("../electron/services");
+
+// build/electron.js  ->  ../electron/db.js
+const db = require(path.join(__dirname, "..", "electron", "db.js"));
+const services = require(path.join(__dirname, "..", "electron", "services.js"));
 let mainWindow;
 
 ipcMain.handle("get-products", async () => {
@@ -62,21 +66,22 @@ function createWindow() {
     width: 1000,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "../build/preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
 
-  const startURL = isDev
-    ? "http://localhost:3000"
-    : `file://${path.join(__dirname, "../build/index.html")}`;
+  const startURL = app.isPackaged
+    ? `file://${path.join(__dirname, "../build/index.html")}`
+    : "http://localhost:3000";
 
   mainWindow.loadURL(startURL);
 
-  if (isDev) {
-    mainWindow.webContents.openDevTools();
-  }
+  // if (isDev) {
+  //   mainWindow.webContents.openDevTools();
+  // }
+  // mainWindow.webContents.openDevTools({ mode: "detach" });
 
   mainWindow.on("closed", () => {
     mainWindow = null;
